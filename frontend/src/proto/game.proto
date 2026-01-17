@@ -1,0 +1,127 @@
+syntax = "proto3"; // 这是Protobuf的第三版语法
+option  java_multiple_files = true; //在Protobuf编译以后，让每个message/service各自生成一个java类文件
+
+package com.gomokumaster.proto;
+
+option java_outer_classname = "GameMsgProtocol";
+
+//消息类型枚举（路由分发，前后端遵守）
+enum MsgType {
+  UNKNOWN = 0;
+  MATCH_REQ = 1001;       // 客户端请求匹配
+  MATCH_CANCEL = 1002;    // 客户端取消匹配
+  MATCH_RES = 1003;       // 服务端响应匹配成功
+  MOVE_REQ = 1004;        // 客户端请求落子/技能
+  BOARD_UPDATE = 1005;     // 服务端广播棋盘更新
+  GAME_OVER = 1006;       // 游戏结束
+  CHAT_REQ = 1007;        // 聊天请求
+  CHAT_RES = 1008;        // 聊天广播
+  ERROR = 1009;           // 错误消息
+  SURRENDER = 1011;     // 用户投降
+  CONNECT = 1012;       // 用户重连、上线
+  GAME_RESUME = 1013;     // 游戏恢复
+  HEARTBEAT = 1014;     // 心跳包
+  GAME_DISCONNECT = 1015; // 用户掉线
+}
+ //用户行为类型枚举
+enum PlayAction{
+  NONE = 0;
+  MOVE = 1;
+  SKILL = 2;
+  PLACE = 3;
+}
+
+//落子请求
+message MoveReq {
+  int32 x = 1;
+  int32 y = 2;
+  string pieceType = 3;
+  PlayAction type = 4;
+  int32 targetX = 5 ;
+  int32 targetY = 6;
+}
+
+enum PieceType{
+  EMPTY = 0;
+  NORMAL = 1;
+  ARCHER = 2;
+  CAVALRY = 3;
+  SHIELD = 4;
+}
+enum GameStatus{
+  WAITING = 0;
+  STARTED = 1;
+  FINISHED = 2;
+  PAUSED = 3;
+}
+
+message Piece {
+  string id = 1;
+  int32  x = 2;
+  int32 y = 3;
+  string ownerId = 5;
+  PieceType pieceType = 6;
+  int32 maxCd = 7;
+  int32 color = 8;
+  bool isAlive = 9;
+  int32 skillCd = 11;
+}
+
+message Player{
+  string id = 1;
+  string name = 2;
+  string avatar = 3;
+  int32 color = 4;
+  int32 remainingShieldCount = 5; //剩余的盾棋数
+  int32 remainingArcherCount = 6; //剩余的弓棋数
+  int32 remainingCavalryCount = 7;//剩余的冲刺棋数
+  bool  isConnected = 8; //在房间内是否在线
+}
+
+//每次下棋都会更新
+message GameSnapshot {
+  string roomId = 1;
+  repeated BoardRow board = 2;//可以理解为List<List<Piece>>,或者board[][]
+  Player yourInfo = 3;
+  Player opponent = 4;
+  int32 currentTurnId = 5;
+  GameStatus status = 6;
+  string yourColor = 7;
+  string lastAction = 8;
+}
+
+message BoardRow{
+  repeated Piece pieces = 1; //可以理解为List<Piece>
+}
+
+message ServerNotice {
+  string message = 1;
+}
+
+message ChatReq {
+  string id = 1;
+  int32 senderColor = 2;
+  string time = 3;
+  string text = 4;
+}
+
+message Surrender {
+  string id = 1;
+  string time = 2;
+  string text = 3;
+  bool isSelf = 4; // 记录投降者的颜色
+}
+//前后端通信的消息包，包含消息类型和消息体
+message GamePacket {
+  MsgType type = 1;
+  oneof body {
+    MoveReq moveReq = 2;
+    GameSnapshot gameSnapshot = 3;
+    ServerNotice notice = 4;
+    ChatReq chatReq = 5;
+    Surrender surrender = 6;
+    string winnerId = 7; //胜者id
+    int64 turnDeadline = 10; //每回合的时限
+    int32 opponentColor = 11;
+  }
+}

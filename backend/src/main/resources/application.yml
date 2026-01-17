@@ -1,0 +1,26 @@
+# 数据源
+spring:
+  datasource:
+    username:  root
+    password:  536786
+    url: jdbc:mysql://localhost:3306/gomoku_db
+  # Redis 配置
+  data:
+    redis:
+      host: 127.0.0.1
+      database: 0
+      port: 6379
+      password: 536786
+
+# JWT 配置
+jwt:
+  secret: pY9r3hfjKx1zXq2nVJ7+Pdw4f8T2e1s0==
+  expiration: 86400
+
+# Tomcat 配置
+server:
+  tomcat:
+    threads:
+      max: 200 # 最大线程数
+      min-spare: 20 # 最小线程数
+    accept-count: 100 # 队列长度
